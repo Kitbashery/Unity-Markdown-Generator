@@ -1,4 +1,4 @@
-# Unity-Markdown-Generator (WIP Under Heavy Development 4/25/23)
+# Unity-Markdown-Generator
 Generate .md Markdown Documentation from code comments in Unity script assets.
 
 ## Usage:
