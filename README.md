@@ -1,16 +1,19 @@
 # Unity-Markdown-Generator
-Generate .md Markdown Documentation from comments in Unity script assets.
+Generate .md Markdown Documentation from code comments in Unity script assets.
 
-
-
-# Depencencies:
+## Depencencies:
 com.unity.nuget.mono-cecil (Docs: https://docs.unity3d.com/Packages/com.unity.nuget.mono-cecil@1.10/manual/index.html).
 
-Should be a hidden internal package and installable by "Add package by name" > com.unity.nuget.mono-cecil via the package manager.
+Should be a hidden internal package and installable by "Add package by name" > com.unity.nuget.mono-cecil 
+via the package manager.
 
+## Usage:
 
+Right-click a script asset then click "Generate Markdown Documentation".
 
-#### Should turn code comments structed like this:
+## Example:
+
+#### The script should turn code comments structed like this:
 ```
 Namespace myNamespace.space
 {
