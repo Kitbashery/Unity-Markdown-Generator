@@ -14,7 +14,7 @@ Right-click a script asset then click "Generate Markdown Documentation".
 
 ## Example:
 
-#### The script should turn code structed like this:
+#### The script should turn code structured like this:
 ```
 Namespace myNamespace.space
 {
