@@ -28,11 +28,20 @@ public static class MarkdownGenerator
         Assembly scriptAssembly = GetScriptAssembly(scriptPath);
 
         string markdown = "# " + scriptName + ":\n";
-        markdown += GetClassSummary(scriptText) + "\n";
-        markdown += "### Namespace:\n";  
-        markdown += scriptAssembly.GetType(scriptName).Namespace + "\n";
+        // Get class summary.
+        markdown += GetClassSummary(scriptText, scriptName) + "\n";
+
+        // Get class namespace.
+        string scriptNamespace = scriptAssembly.GetType(scriptName).Namespace;
+        if (!string.IsNullOrEmpty(scriptNamespace))
+        {
+            markdown += "### Namespace:\n";
+            markdown += scriptNamespace + "\n";
+        }
+
         markdown += "## Properties:\n\n";
         markdown += GetPropertiesTable(scriptAssembly, scriptName, scriptText) + "\n\n";
+
         markdown += "## Methods:\n\n";
         markdown += GetMethodTable(scriptAssembly, scriptName, scriptText) + "\n";
 
@@ -43,19 +52,9 @@ public static class MarkdownGenerator
         Debug.Log("Markdown documentation generated at " + outputPath);
     }
 
-    private static string GetClassSummary(string scriptText)
+    public static string GetClassSummary(string scriptText, string className)
     {
-        var regex = new Regex(@"///\s*<summary>(?<summary>[\s\S]*?)</summary>");
-        var summary = string.Empty;
-
-        var summaryMatch = regex.Match(scriptText);
-        if (summaryMatch.Success)
-        {
-            summary = summaryMatch.Groups["summary"].Value.Trim();
-            summary = summary.TrimStart('/', ' ', '\t');
-            summary = summary.TrimEnd('/', ' ', '\t');
-        }
-        return summary;
+        return GetSummaryCommentAboveMatch(scriptText, Regex.Match(scriptText, $@"\bclass\s+{Regex.Escape(className)}\b", RegexOptions.Multiline));
     }
 
     public static Assembly GetScriptAssembly(string assetPath)
@@ -128,7 +127,6 @@ public static class MarkdownGenerator
     {
         var type = assembly.GetType(className);
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
-        var regex = new Regex(@"///\s*<summary>(?<summary>[\s\S]*?)</summary>");
 
         var markdownTable = "| Type | Property Name | Summary | Default Value |\n| --- | --- | --- | --- |\n";
         foreach (var property in properties)
@@ -257,40 +255,30 @@ public static class MarkdownGenerator
         return table.ToString();
     }
 
-    public static string GetSummaryCommentAboveMatch(string source, Match match)
+    public static string GetSummaryCommentAboveMatch(string text, Match regexMatch)
     {
-        string pattern = @"///\s*<summary>(?<text>[\s\S]*?)\s*///\s*</summary>";
-        string summaryText = "";
+        string[] lines = text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+        int matchLine = regexMatch.Index;
+        int maxLinesAbove = Math.Min(matchLine, 4);
+        int startLine = matchLine - maxLinesAbove;
 
-        int matchLine = source.Substring(0, match.Index).Count(c => c == '\n'); // convert match index to line number
-        int searchStartLine = matchLine - 1; // start search from the line above the match
-        string[] lines = source.Split('\n');
-
-        // find the first instance of a non-comment line above the match
-        int firstNonCommentLine = searchStartLine;
-        for (int i = searchStartLine; i >= 0; i--)
+        for (int i = startLine; i < matchLine; i++)
         {
-            string line = lines[i].Trim();
-            if (!string.IsNullOrEmpty(line) && !line.StartsWith("//"))
+            if (i >= 0 && i < lines.Length && lines[i].Contains("</summary>"))
             {
-                firstNonCommentLine = i;
-                break;
+                int summaryIndex = lines[i].IndexOf("<summary>");
+                if (summaryIndex != -1)
+                {
+                    return lines[i].Substring(summaryIndex + "<summary>".Length);
+                }
+                else
+                {
+                    return string.Empty;
+                }
             }
         }
 
-        // search for the nearest preceding summary comment above the first non-comment line
-        for (int i = firstNonCommentLine - 1; i >= 0; i--)
-        {
-            string line = lines[i].Trim();
-
-            if (line.StartsWith("/// <summary>"))
-            {
-                summaryText = Regex.Match(line, pattern).Groups["text"].Value.Trim();
-                break;
-            }
-        }
-
-        return summaryText;
+        return string.Empty;
     }
 
     /// <summary>
