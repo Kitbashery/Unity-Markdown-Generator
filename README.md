@@ -90,3 +90,10 @@ myNamespace.space
 | Name | Summary      | Parameters | Returns |
 |:-----|:-------------|:-----------|:--------|
 | Test |  Test method summary. | `int` param1 "param1 summary" , `string` param2 "param2 summary", `int` param3 "param3 summary" = 1  | `Void` |
+
+
+---
+The name Kitbashery & all associated images Copyright &copy; 2023 Kitbashery. All Rights Reserved.
+
+<i>"Unity", Unity logos, and other Unity trademarks aretrademarks or registered trademarks of Unity Technologies. 
+Notice: This script is an internal tool of Kitbashery and not part of Kitbashery's product library and is provided AS IS. The name Unity is only used to elaborate on what technology stack this parser is for.</i>
