@@ -11,6 +11,7 @@ Right-click a script asset then click "Generate Markdown Documentation".
 - Only documents the class that shares the script file name.
 - Only documents public properties and methods.
 - Summary comment support is WIP.
+- Scripts managed by .asmdef assets are unsupported.
 
 ## Example:
 
