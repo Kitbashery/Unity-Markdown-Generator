@@ -1,5 +1,5 @@
 # Unity-Markdown-Generator
-Generate .md Markdown Documentation from code comments in Unity script assets.
+Generate .md Markdown Documentation from Unity C# script assets.
 
 ## Usage:
 
@@ -10,8 +10,8 @@ Right-click a script asset then click "Generate Markdown Documentation".
 - Only supports Tooltip attributes for properties.
 - Only documents the class that shares the script file name.
 - Only documents public properties and methods.
-- Summary comment support is WIP.
-- Scripts managed by .asmdef assets are unsupported.
+- XML Summary comment support is WIP.
+- Scripts managed by .asmdef assets are unsupported move them out to generate docs.
 
 ## Example:
 
