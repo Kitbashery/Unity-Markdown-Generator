@@ -1,3 +1,9 @@
+![](https://kitbashery.com/assets/images/kitbashery-github-banner.jpg)
+
+[![Unity Version](https://img.shields.io/badge/Unity-2021.3%2B-blue.svg)](https://unity3d.com/get-unity/download)
+[![GitHub](https://img.shields.io/github/license/kitbashery/modular-ai.svg)](https://github.com/Kitbashery/Unity-Markdown-Generator/blob/main/LICENSE)
+[![Contributing](https://img.shields.io/badge/Contribute-guidelines-lightgrey)](https://github.com/Kitbashery/.github/blob/main/.github/CONTRIBUTING.md)
+
 # Unity-Markdown-Generator
 Generate .md Markdown Documentation from Unity C# script assets.
 
