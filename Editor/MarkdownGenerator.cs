@@ -8,18 +8,6 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEditor;
 
-/*
-MIT License
-
-Copyright (c) 2023 Kitbashery
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-
 /// <summary>
 /// Generates Github Markdown from a script.
 /// </summary>
@@ -38,30 +26,39 @@ public static class MarkdownGenerator
         string scriptName = Path.GetFileNameWithoutExtension(scriptPath);
         string scriptText = AssetDatabase.LoadAssetAtPath<TextAsset>(scriptPath).text;
         Assembly scriptAssembly = GetScriptAssembly(scriptPath);
+        string fullTypeName = scriptAssembly.GetName().Name + "." + scriptName;
+        Type scriptType = scriptAssembly.GetType(fullTypeName);
 
-        string markdown = "# " + scriptName + ":\n";
-        // Get class summary.
-        markdown += GetClassSummary(scriptText, scriptName) + "\n";
-
-        // Get class namespace.
-        string scriptNamespace = scriptAssembly.GetType(scriptName).Namespace;
-        if (!string.IsNullOrEmpty(scriptNamespace))
+        if (scriptType != null)
         {
-            markdown += "### Namespace:\n";
-            markdown += scriptNamespace + "\n";
+            string markdown = "# " + scriptName + ":\n";
+            // Get class summary.
+            markdown += GetClassSummary(scriptText, scriptName) + "\n";
+
+            // Get class namespace.
+            string scriptNamespace = scriptType.Namespace;
+            if (!string.IsNullOrEmpty(scriptNamespace))
+            {
+                markdown += "### Namespace:\n";
+                markdown += scriptNamespace + "\n\n";
+            }
+
+            markdown += "## Properties:\n\n";
+            markdown += GetPropertiesTable(scriptType, scriptName, scriptText) + "\n\n";
+
+            markdown += "## Methods:\n\n";
+            markdown += GetMethodTable(scriptType, scriptName, scriptText) + "\n";
+
+            string outputPath = Path.GetDirectoryName(scriptPath) + "/" + scriptName + ".md";
+            File.WriteAllText(outputPath, markdown);
+            AssetDatabase.Refresh();
+
+            Debug.Log("Markdown documentation generated at " + outputPath);
         }
-
-        markdown += "## Properties:\n\n";
-        markdown += GetPropertiesTable(scriptAssembly, scriptName, scriptText) + "\n\n";
-
-        markdown += "## Methods:\n\n";
-        markdown += GetMethodTable(scriptAssembly, scriptName, scriptText) + "\n";
-
-        string outputPath = Path.GetDirectoryName(scriptPath) + "/" + scriptName + ".md";
-        File.WriteAllText(outputPath, markdown);
-        AssetDatabase.Refresh();
-
-        Debug.Log("Markdown documentation generated at " + outputPath);
+        else
+        {
+            Debug.LogWarningFormat("Script type: {0} not found in {1} make sure the assembly name matches the namespace containing the class.", scriptName, scriptAssembly.FullName);
+        }
     }
 
     public static string GetClassSummary(string scriptText, string className)
@@ -135,10 +132,9 @@ public static class MarkdownGenerator
         return null;
     }
 
-    public static string GetPropertiesTable(Assembly assembly, string className, string scriptText)
+    public static string GetPropertiesTable(Type scriptType, string className, string scriptText)
     {
-        var type = assembly.GetType(className);
-        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+        var properties = scriptType.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
 
         var markdownTable = "| Type | Property Name | Summary | Default Value |\n| --- | --- | --- | --- |\n";
         foreach (var property in properties)
@@ -164,7 +160,7 @@ public static class MarkdownGenerator
             markdownTable += $"| {propertyType} | {propertyName} | {summary} | {defaultValue} |\n";
         }
 
-        var fields = type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
+        var fields = scriptType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance);
         foreach (var field in fields)
         {
             if (field.IsPrivate || field.IsInitOnly)
@@ -193,13 +189,10 @@ public static class MarkdownGenerator
         return markdownTable;
     }
 
-    public static string GetMethodTable(Assembly assembly, string className, string scriptText)
+    public static string GetMethodTable(Type scriptType, string className, string scriptText)
     {
-        // Get class type
-        Type type = assembly.GetType(className);
-
         // Get methods
-        MethodInfo[] methods = type.GetMethods();
+        MethodInfo[] methods = scriptType.GetMethods();
 
         // Build table header
         StringBuilder table = new StringBuilder("| Method | Summary | Parameters | Returns |\n");
