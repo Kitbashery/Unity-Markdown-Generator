@@ -13,11 +13,15 @@ Right-click a script asset then click "Generate Markdown Documentation".
 
 ## Limitations:
 
-- Only supports Tooltip attributes for properties.
 - Only documents the class that shares the script file name.
+- Namespace names and assembly names must match.
 - Only documents public properties, methods and fields.
 - XML Summary comment support is WIP.
-- Namespace names and assembly names must match.
+
+## Comment Support:
+
+- Tooltip attributes for properties.
+- Parameter XML comments for methods.
 
 ## Example:
 
