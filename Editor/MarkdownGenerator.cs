@@ -308,6 +308,19 @@ public static class MarkdownGenerator
             return typeName;
         }
     }
+    
+    public static string ConvertToMarkdownTable(string[] array)
+    {
+        StringBuilder table = new StringBuilder();
+        table.AppendLine("| Index | Value |");
+        table.AppendLine("| ----- | ----- |");
+        for (int i = 0; i < array.Length; i++)
+        {
+            table.AppendLine($"| {i} | {array[i]} |");
+        }
+        Debug.Log(table.ToString());
+        return table.ToString();
+    }
 
     #region Test Data:
 
