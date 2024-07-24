@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Reflection;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEditor;
@@ -25,9 +24,7 @@ public static class MarkdownGenerator
 
         string scriptName = Path.GetFileNameWithoutExtension(scriptPath);
         string scriptText = AssetDatabase.LoadAssetAtPath<TextAsset>(scriptPath).text;
-        Assembly scriptAssembly = GetScriptAssembly(scriptPath);
-        string fullTypeName = scriptAssembly.GetName().Name + "." + scriptName;
-        Type scriptType = scriptAssembly.GetType(fullTypeName);
+        Type scriptType = FindTypeInAssemblies(scriptName);
 
         if (scriptType != null)
         {
@@ -57,7 +54,7 @@ public static class MarkdownGenerator
         }
         else
         {
-            Debug.LogWarningFormat("Script type: {0} not found in {1} make sure the assembly name matches the namespace containing the class.", scriptName, scriptAssembly.FullName);
+            Debug.LogWarningFormat("Script type: {0} not found in any loaded assembly.", scriptName);
         }
     }
 
@@ -66,69 +63,16 @@ public static class MarkdownGenerator
         return GetSummaryCommentAboveMatch(scriptText, Regex.Match(scriptText, $@"\bclass\s+{Regex.Escape(className)}\b", RegexOptions.Multiline));
     }
 
-    public static Assembly GetScriptAssembly(string assetPath)
+    public static Type FindTypeInAssemblies(string typeName)
     {
-        // Load the asset at the given path
-        var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
-
-        // Cast the asset to a MonoScript
-        var monoScript = asset as MonoScript;
-
-        if (monoScript == null)
+        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            Debug.LogError($"Asset at path {assetPath} is not a MonoScript.");
-            return null;
-        }
-
-        // Get the full type name from the MonoScript
-        var typeName = monoScript.GetClass().FullName;
-
-        // Check if the type is in a custom namespace assembly
-        var customAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetTypes().Any(t => t.FullName == typeName));
-        if (customAssembly != null)
-        {
-            // Get the path of the assembly file
-            var path = customAssembly.Location;
-            if (string.IsNullOrEmpty(path))
+            var type = assembly.GetTypes().FirstOrDefault(t => t.Name == typeName);
+            if (type != null)
             {
-                Debug.LogError($"Assembly for type {typeName} was not loaded from a file.");
-                return null;
-            }
-            try
-            {
-                return Assembly.LoadFrom(path);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Failed to load assembly from path {path}: {e.Message}");
-                return null;
+                return type;
             }
         }
-
-        // Get the default assembly for the type
-        var defaultAssembly = Type.GetType(typeName)?.Assembly;
-        if (defaultAssembly != null)
-        {
-            // Get the path of the assembly file
-            var path = defaultAssembly.Location;
-            if (string.IsNullOrEmpty(path))
-            {
-                Debug.LogError($"Assembly for type {typeName} was not loaded from a file.");
-                return null;
-            }
-            try
-            {
-                return Assembly.LoadFrom(path);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Failed to load assembly from path {path}: {e.Message}");
-                return null;
-            }
-        }
-
-        // If we couldn't find the assembly, log an error and return null
-        Debug.LogError($"Could not find assembly for type {typeName}.");
         return null;
     }
 
@@ -174,14 +118,12 @@ public static class MarkdownGenerator
             var tooltipAttribute = (TooltipAttribute)field.GetCustomAttribute(typeof(TooltipAttribute));
             var summary = tooltipAttribute != null ? tooltipAttribute.tooltip.TrimStart('/', ' ', '\t') : "";
 
-            var defaultValueMatch = Regex.Match(scriptText, $@"\b{fieldName}\b\s*=\s*(?<value>\S+)\s*;");
+            var defaultValueMatch = Regex.Match(scriptText, $@"\b{fieldName}\b\s*=\\s*(?<value>\S+)\s*;");
             if (string.IsNullOrEmpty(summary))
             {
                 summary = GetSummaryCommentAboveMatch(scriptText, defaultValueMatch);
             }
             var defaultValue = defaultValueMatch.Success ? defaultValueMatch.Groups["value"].Value : "";
-
-
 
             markdownTable += $"| `{fieldType}` | {fieldName} | {summary} | {defaultValue} |\n";
         }
@@ -308,7 +250,7 @@ public static class MarkdownGenerator
             return typeName;
         }
     }
-    
+
     public static string ConvertToMarkdownTable(string[] array)
     {
         StringBuilder table = new StringBuilder();
@@ -338,7 +280,7 @@ public static class MarkdownGenerator
     public static int test1 = 0;
 
     /// <summary>
-    ///  property summary.
+    /// property summary.
     /// </summary>
     public static int test2 = 1;
 
