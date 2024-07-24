@@ -14,7 +14,6 @@ Right-click a script asset then click "Generate Markdown Documentation".
 ## Limitations:
 
 - Only documents the class that shares the script file name.
-- Namespace names and assembly names must match.
 - Only documents public properties, methods and fields.
 - XML Summary comment support is WIP.
 
